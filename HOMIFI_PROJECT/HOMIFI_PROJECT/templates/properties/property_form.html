@@ -1,0 +1,254 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if property %}Edit Property{% else %}Add New Property{% endif %} - HomiFi{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">
+                        {% if property %}Edit Property{% else %}Add New Property{% endif %}
+                    </h2>
+
+                    <form method="post" enctype="multipart/form-data" id="propertyForm" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-4">
+                            <h4 class="mb-3">Basic Information</h4>
+                            <div class="col-md-6 mb-3">
+                                <label for="title" class="form-label">Property Title*</label>
+                                <input type="text" class="form-control" id="title" name="title" 
+                                       value="{{ property.title }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">Price*</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="price" name="price" 
+                                           value="{{ property.price }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="property_type" class="form-label">Property Type*</label>
+                                <select class="form-select" id="property_type" name="property_type" required>
+                                    <option value="">Select Type</option>
+                                    {% for type, label in property_types %}
+                                        <option value="{{ type }}" {% if property.property_type == type %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="listing_type" class="form-label">Listing Type*</label>
+                                <select class="form-select" id="listing_type" name="listing_type" required>
+                                    <option value="">Select Type</option>
+                                    {% for type, label in listing_types %}
+                                        <option value="{{ type }}" {% if property.listing_type == type %}selected{% endif %}>
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Property Details -->
+                        <div class="row mb-4">
+                            <h4 class="mb-3">Property Details</h4>
+                            <div class="col-md-4 mb-3">
+                                <label for="bedrooms" class="form-label">Bedrooms*</label>
+                                <input type="number" class="form-control" id="bedrooms" name="bedrooms" 
+                                       value="{{ property.bedrooms }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="bathrooms" class="form-label">Bathrooms*</label>
+                                <input type="number" class="form-control" id="bathrooms" name="bathrooms" 
+                                       value="{{ property.bathrooms }}" step="0.5" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="area" class="form-label">Area (sq ft)*</label>
+                                <input type="number" class="form-control" id="area" name="area" 
+                                       value="{{ property.area }}" required>
+                            </div>
+                            <div class="col-12 mb-3">
+                                <label for="description" class="form-label">Description*</label>
+                                <textarea class="form-control" id="description" name="description" 
+                                          rows="4" required>{{ property.description }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="row mb-4">
+                            <h4 class="mb-3">Location</h4>
+                            <div class="col-12 mb-3">
+                                <label for="address" class="form-label">Address*</label>
+                                <input type="text" class="form-control" id="address" name="address" 
+                                       value="{{ property.address }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="city" class="form-label">City*</label>
+                                <input type="text" class="form-control" id="city" name="city" 
+                                       value="{{ property.city }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="state" class="form-label">State*</label>
+                                <input type="text" class="form-control" id="state" name="state" 
+                                       value="{{ property.state }}" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="zip_code" class="form-label">ZIP Code*</label>
+                                <input type="text" class="form-control" id="zip_code" name="zip_code" 
+                                       value="{{ property.zip_code }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Images -->
+                        <div class="row mb-4">
+                            <h4 class="mb-3">Property Images</h4>
+                            <div class="col-12 mb-3">
+                                <label for="images" class="form-label">Upload Images</label>
+                                <input type="file" class="form-control" id="images" name="images" 
+                                       multiple accept="image/*">
+                                <small class="text-muted">You can select multiple images. First image will be the primary image.</small>
+                            </div>
+                            
+                            {% if property and property.images.exists %}
+                                <div class="col-12">
+                                    <h5 class="mb-3">Current Images</h5>
+                                    <div class="row" id="existingImages">
+                                        {% for image in property.images.all %}
+                                            <div class="col-md-3 mb-3">
+                                                <div class="card">
+                                                    <img src="{{ image.image.url }}" class="card-img-top" 
+                                                         alt="Property Image" style="height: 150px; object-fit: cover;">
+                                                    <div class="card-body p-2">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" 
+                                                                   name="primary_image" value="{{ image.id }}"
+                                                                   {% if image.is_primary %}checked{% endif %}>
+                                                            <label class="form-check-label">Primary</label>
+                                                        </div>
+                                                        <button type="button" class="btn btn-sm btn-danger w-100"
+                                                                onclick="deleteImage({{ image.id }})">
+                                                            Delete
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Features -->
+                        <div class="row mb-4">
+                            <h4 class="mb-3">Features</h4>
+                            <div class="col-12">
+                                <div id="featuresList">
+                                    {% if property.features.exists %}
+                                        {% for feature in property.features.all %}
+                                            <div class="input-group mb-2">
+                                                <input type="text" class="form-control" name="features[]" 
+                                                       value="{{ feature.feature_name }}">
+                                                <button type="button" class="btn btn-outline-danger" 
+                                                        onclick="removeFeature(this)">Remove</button>
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <button type="button" class="btn btn-outline-primary" onclick="addFeature()">
+                                    Add Feature
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="row">
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-primary px-5">
+                                    {% if property %}Update Property{% else %}Add Property{% endif %}
+                                </button>
+                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-5">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addFeature() {
+    const featuresList = document.getElementById('featuresList');
+    const featureDiv = document.createElement('div');
+    featureDiv.className = 'input-group mb-2';
+    featureDiv.innerHTML = `
+        <input type="text" class="form-control" name="features[]" placeholder="Enter feature">
+        <button type="button" class="btn btn-outline-danger" onclick="removeFeature(this)">Remove</button>
+    `;
+    featuresList.appendChild(featureDiv);
+}
+
+function removeFeature(button) {
+    button.closest('.input-group').remove();
+}
+
+function deleteImage(imageId) {
+    if (confirm('Are you sure you want to delete this image?')) {
+        fetch(`/api/property-images/${imageId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        })
+        .then(response => {
+            if (response.ok) {
+                location.reload();
+            }
+        });
+    }
+}
+
+// Form validation
+document.getElementById('propertyForm').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    this.classList.add('was-validated');
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.invalid-feedback {
+    font-size: 80%;
+}
+
+#existingImages .card {
+    transition: transform 0.2s;
+}
+
+#existingImages .card:hover {
+    transform: translateY(-5px);
+}
+</style>
+{% endblock %}

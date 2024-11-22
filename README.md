@@ -18,11 +18,59 @@ HomiFi combines cutting-edge technology with a user-friendly interface to revolu
 3. Tap on a property to see images and detailed specifications.  
 4. Use filters to customize your search.  
 
-## Getting Started  
-To start your home discovery journey:  
-1. Download HomiFi on your device.  
-2. Create an account or log in.  
-3. Start exploring properties near you today!  
+## Getting Started with HomiFi
+
+### Account Setup
+1. **Register**
+   - Click "Register" in the top right
+   - Fill in: email, username, password
+   - Choose account type: Home Seeker or Property Owner
+
+2. **Login**
+   - Enter email and password
+   - Use "Forgot Password?" if needed
+   - Option to stay signed in
+
+### Using HomiFi
+
+#### For Home Seekers
+1. **Browse Properties**
+   - View all listings on homepage
+   - Use filters: price, location, property type
+   - Toggle between grid and map view
+
+2. **Save & Track**
+   - Click heart icon to favorite properties
+   - Set up search alerts
+   - View property history
+
+3. **Contact & Inquire**
+   - Message property owners directly
+   - Schedule viewings
+   - Save contact information
+
+#### For Property Owners
+1. **List Property**
+   - Click "Add Property"
+   - Fill required details
+   - Upload photos
+   - Set visibility options
+
+2. **Manage Listings**
+   - Edit property details
+   - Update availability
+   - View interested buyers
+
+### Quick Tips
+- Enable location for better search results
+- Save searches for quick access
+- Update profile for faster inquiries
+- Check notifications for updates
+
+### Need Help?
+- Email: support@homifi.com
+- Chat: Available 9 AM - 5 PM EST
+- FAQ: homifi.com/help
 
 ## Future Roadmap  
 - Enhanced map integration with street views.  
@@ -31,3 +79,5 @@ To start your home discovery journey:
 - Saved searches and favorite lists for users.  
 
 Join **HomiFi** and redefine how you search for homes. Whether buying or just browsing, your next move starts here!
+
+Start exploring properties today with HomiFi!

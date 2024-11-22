@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Saved Searches - HomiFi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="mb-4">Saved Searches</h1>
+    
+    {% if saved_searches %}
+        <div class="row">
+            {% for search in saved_searches %}
+                <div class="col-md-6 mb-4" id="search-{{ search.id }}">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0">
+                                    {% if search.query %}
+                                        "{{ search.query }}"
+                                    {% else %}
+                                        All Properties
+                                    {% endif %}
+                                </h5>
+                                <div class="dropdown">
+                                    <button class="btn btn-link text-dark p-0" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li>
+                                            <button class="dropdown-item" onclick="deleteSavedSearch({{ search.id }})">
+                                                <i class="fas fa-trash-alt text-danger me-2"></i>Delete
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="search-details small text-muted mb-3">
+                                {% if search.location %}
+                                    <div class="mb-1">
+                                        <i class="fas fa-map-marker-alt me-2"></i>{{ search.location }}
+                                    </div>
+                                {% endif %}
+                                
+                                {% if search.filters %}
+                                    <div class="mb-1">
+                                        <i class="fas fa-filter me-2"></i>
+                                        {% for key, value in search.filters.items %}
+                                            {% if value %}
+                                                {% if key == 'min_price' %}
+                                                    Min ${{ value }}
+                                                {% elif key == 'max_price' %}
+                                                    Max ${{ value }}
+                                                {% elif key == 'property_type' %}
+                                                    {{ value|title }}
+                                                {% elif key == 'listing_type' %}
+                                                    For {{ value|title }}
+                                                {% elif key == 'bedrooms' %}
+                                                    {{ value }} bed
+                                                {% elif key == 'bathrooms' %}
+                                                    {{ value }} bath
+                                                {% endif %}
+                                                {% if not forloop.last %} • {% endif %}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                
+                                <div>
+                                    <i class="far fa-clock me-2"></i>Saved {{ search.created_at|timesince }} ago
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" 
+                                           id="notificationSwitch-{{ search.id }}"
+                                           {% if search.notification_enabled %}checked{% endif %}
+                                           onchange="toggleNotification({{ search.id }})">
+                                    <label class="form-check-label" for="notificationSwitch-{{ search.id }}">
+                                        Email notifications
+                                    </label>
+                                </div>
+                                <a href="{% url 'property_list' %}?{{ search.query|urlencode }}" 
+                                   class="btn btn-primary btn-sm">
+                                    View Results
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+            <h3>No Saved Searches</h3>
+            <p class="text-muted">Save your property searches to get notified when new matches are found.</p>
+            <a href="{% url 'property_list' %}" class="btn btn-primary">
+                Browse Properties
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleNotification(searchId) {
+    const switch_elem = document.getElementById(`notificationSwitch-${searchId}`);
+    
+    fetch(`/api/saved-searches/${searchId}/toggle-notification/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Toggle was successful, leave the switch in its new state
+            toastr.success(data.message);
+        } else {
+            // If there was an error, revert the switch
+            switch_elem.checked = !switch_elem.checked;
+            toastr.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        // Revert the switch on error
+        switch_elem.checked = !switch_elem.checked;
+        toastr.error('Failed to update notification settings');
+    });
+}
+
+function deleteSavedSearch(searchId) {
+    if (!confirm('Are you sure you want to delete this saved search?')) {
+        return;
+    }
+    
+    fetch(`/api/saved-searches/${searchId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const searchElement = document.getElementById(`search-${searchId}`);
+            searchElement.remove();
+            toastr.success(data.message);
+            
+            // If no more saved searches, reload to show empty state
+            if (document.querySelectorAll('.card').length === 0) {
+                location.reload();
+            }
+        } else {
+            toastr.error(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        toastr.error('Failed to delete saved search');
+    });
+}
+
+// Helper function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.form-switch .form-check-input {
+    cursor: pointer;
+}
+
+.form-switch .form-check-input:checked {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.search-details i {
+    width: 16px;
+}
+</style>
+{% endblock %}

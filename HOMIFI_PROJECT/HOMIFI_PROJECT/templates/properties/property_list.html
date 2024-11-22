@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Properties - HomiFi{% endblock %}
+
+{% block content %}
+<!-- Search Filters -->
+<div class="search-filters mb-4">
+    <form method="get" class="card card-body search-form">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="location-search">
+                    <div class="location-input-wrapper">
+                        <input type="text" 
+                               id="location-input" 
+                               class="form-control location-input" 
+                               name="location" 
+                               placeholder="Enter location..."
+                               value="{{ request.GET.location }}">
+                        <button type="button" 
+                                id="use-location-btn" 
+                                class="use-location-btn" 
+                                title="Use my location">
+                            <i class="fas fa-location-arrow"></i>
+                        </button>
+                    </div>
+                    <div id="autocomplete-results" class="autocomplete-results"></div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="property_type">
+                    <option value="">Property Type</option>
+                    {% for type, label in property_types %}
+                        <option value="{{ type }}" {% if request.GET.property_type == type %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" name="listing_type">
+                    <option value="">For Sale/Rent</option>
+                    {% for type, label in listing_types %}
+                        <option value="{{ type }}" {% if request.GET.listing_type == type %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" name="min_price" placeholder="Min Price" value="{{ request.GET.min_price }}">
+            </div>
+            <div class="col-md-2">
+                <input type="number" class="form-control" name="max_price" placeholder="Max Price" value="{{ request.GET.max_price }}">
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">Filter</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Property Listings -->
+<div class="row">
+    {% if properties %}
+        {% for property in properties %}
+            <div class="col-md-4 mb-4">
+                <div class="card property-card h-100">
+                    <div class="position-relative">
+                        <div class="property-image">
+                            <img src="{{ property.images.first.image.url|default:'static/images/default-property.jpg' }}" 
+                                 class="card-img-top" alt="{{ property.title }}" style="height: 200px; object-fit: cover;">
+                            <span class="badge {% if property.listing_type == 'sale' %}bg-success{% else %}bg-primary{% endif %} position-absolute top-0 end-0 m-2">
+                                For {{ property.get_listing_type_display }}
+                            </span>
+                            {% if property.distance %}
+                                <span class="distance-badge position-absolute top-0 start-0 m-2">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {% if property.distance < 1 %}
+                                        {{ property.distance|floatformat:1 }} km
+                                    {% else %}
+                                        {{ property.distance|floatformat:0 }} km
+                                    {% endif %}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ property.title }}</h5>
+                            <p class="card-text text-muted">
+                                <i class="fas fa-map-marker-alt"></i> {{ property.city }}, {{ property.state }}
+                            </p>
+                            <p class="card-text">
+                                <strong>${{ property.price|floatformat:0 }}</strong>
+                                {% if property.listing_type == 'rent' %}/month{% endif %}
+                            </p>
+                            <div class="property-features small text-muted mb-3">
+                                <span class="me-3"><i class="fas fa-bed"></i> {{ property.bedrooms }} beds</span>
+                                <span class="me-3"><i class="fas fa-bath"></i> {{ property.bathrooms }} baths</span>
+                                <span><i class="fas fa-ruler-combined"></i> {{ property.area }} sq ft</span>
+                            </div>
+                            <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-primary w-100">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info text-center">
+                No properties found matching your criteria.
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Pagination -->
+{% if properties.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if properties.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ properties.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo;</a>
+                </li>
+            {% endif %}
+
+            {% for num in properties.paginator.page_range %}
+                {% if properties.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if properties.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ properties.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .property-card {
+        transition: transform 0.3s;
+    }
+    
+    .property-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .search-filters {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+    
+    .distance-badge {
+        background-color: #fff;
+        border: 1px solid #ddd;
+        padding: 2px 5px;
+        border-radius: 5px;
+        font-size: 12px;
+    }
+</style>
+{% endblock %}

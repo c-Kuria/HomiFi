@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ property.title }} - HomiFi{% endblock %}
+
+{% block content %}
+<div class="property-detail">
+    <!-- Image Gallery -->
+    <div class="property-gallery mb-4">
+        <div id="propertyCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                {% for image in property.images.all %}
+                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{{ image.image.url }}" class="d-block w-100" alt="{{ property.title }}"
+                             style="height: 500px; object-fit: cover;">
+                    </div>
+                {% empty %}
+                    <div class="carousel-item active">
+                        <img src="{% static 'images/default-property.jpg' %}" class="d-block w-100" alt="Default Image"
+                             style="height: 500px; object-fit: cover;">
+                    </div>
+                {% endfor %}
+            </div>
+            {% if property.images.count > 1 %}
+                <button class="carousel-control-prev" type="button" data-bs-target="#propertyCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#propertyCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Property Details -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1 class="card-title mb-0">{{ property.title }}</h1>
+                        <span class="badge {% if property.listing_type == 'sale' %}bg-success{% else %}bg-primary{% endif %}">
+                            For {{ property.get_listing_type_display }}
+                        </span>
+                    </div>
+                    
+                    <h2 class="text-primary mb-3">${{ property.price|floatformat:0 }}
+                        {% if property.listing_type == 'rent' %}<small class="text-muted">/month</small>{% endif %}
+                    </h2>
+
+                    <div class="property-meta mb-4">
+                        <span class="me-4"><i class="fas fa-map-marker-alt"></i> {{ property.address }}</span>
+                        <span class="me-4"><i class="fas fa-bed"></i> {{ property.bedrooms }} Bedrooms</span>
+                        <span class="me-4"><i class="fas fa-bath"></i> {{ property.bathrooms }} Bathrooms</span>
+                        <span><i class="fas fa-ruler-combined"></i> {{ property.area }} sq ft</span>
+                    </div>
+
+                    <h3>Description</h3>
+                    <p class="mb-4">{{ property.description }}</p>
+
+                    <h3>Property Details</h3>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>Property Type:</strong> {{ property.get_property_type_display }}</li>
+                                <li><strong>City:</strong> {{ property.city }}</li>
+                                <li><strong>State:</strong> {{ property.state }}</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li><strong>ZIP Code:</strong> {{ property.zip_code }}</li>
+                                <li><strong>Listed:</strong> {{ property.created_at|date:"F j, Y" }}</li>
+                                <li><strong>Last Updated:</strong> {{ property.updated_at|date:"F j, Y" }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    {% if property.features.exists %}
+                        <h3>Features</h3>
+                        <ul class="list-unstyled row mb-4">
+                            {% for feature in property.features.all %}
+                                <li class="col-md-6 mb-2">
+                                    <i class="fas fa-check text-success me-2"></i>{{ feature.feature_name }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Map Section -->
+            {% if property.latitude and property.longitude %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3>Location</h3>
+                        <div id="propertyMap" style="height: 400px;"></div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Contact Card -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="card-title">Contact Owner</h3>
+                    <div class="owner-info mb-4">
+                        <img src="{{ property.owner.profile_picture.url|default:'static/images/default-avatar.jpg' }}" 
+                             class="rounded-circle me-2" alt="Owner" style="width: 50px; height: 50px;">
+                        <div>
+                            <h4 class="mb-0">{{ property.owner.get_full_name|default:property.owner.username }}</h4>
+                            <p class="text-muted mb-0">Property Owner</p>
+                        </div>
+                    </div>
+
+                    <form method="post" action="{% url 'contact_owner' property.id %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <input type="text" class="form-control" name="name" placeholder="Your Name" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="email" class="form-control" name="email" placeholder="Your Email" required>
+                        </div>
+                        <div class="mb-3">
+                            <input type="tel" class="form-control" name="phone" placeholder="Your Phone">
+                        </div>
+                        <div class="mb-3">
+                            <textarea class="form-control" name="message" rows="4" placeholder="Your Message" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Send Message</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-grid gap-2 mb-4">
+                {% if user.is_authenticated %}
+                    <button class="btn {% if is_favorite %}btn-danger{% else %}btn-outline-primary{% endif %}" 
+                            onclick="toggleFavorite({{ property.id }})">
+                        <i class="fas {% if is_favorite %}fa-heart{% else %}fa-heart{% endif %}"></i>
+                        {% if is_favorite %}Remove from Favorites{% else %}Add to Favorites{% endif %}
+                    </button>
+                {% endif %}
+                <a href="tel:{{ property.owner.phone_number }}" class="btn btn-outline-success">
+                    <i class="fas fa-phone"></i> Call Owner
+                </a>
+            </div>
+
+            <!-- Similar Properties -->
+            {% if similar_properties %}
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Similar Properties</h3>
+                        {% for similar in similar_properties %}
+                            <div class="similar-property mb-3">
+                                <a href="{% url 'property_detail' similar.id %}" class="text-decoration-none">
+                                    <div class="row g-0">
+                                        <div class="col-4">
+                                            <img src="{{ similar.images.first.image.url|default:'static/images/default-property.jpg' }}" 
+                                                 class="img-fluid rounded" alt="{{ similar.title }}">
+                                        </div>
+                                        <div class="col-8 ps-3">
+                                            <h5 class="mb-1">{{ similar.title }}</h5>
+                                            <p class="text-muted mb-1">{{ similar.city }}, {{ similar.state }}</p>
+                                            <p class="text-primary mb-0">${{ similar.price|floatformat:0 }}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if property.latitude and property.longitude %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}"></script>
+<script>
+    function initMap() {
+        const propertyLocation = { 
+            lat: {{ property.latitude }}, 
+            lng: {{ property.longitude }} 
+        };
+        const map = new google.maps.Map(document.getElementById("propertyMap"), {
+            zoom: 15,
+            center: propertyLocation,
+        });
+        new google.maps.Marker({
+            position: propertyLocation,
+            map: map,
+            title: "{{ property.title }}"
+        });
+    }
+    window.addEventListener('load', initMap);
+</script>
+{% endif %}
+
+<script>
+function toggleFavorite(propertyId) {
+    fetch(`/api/properties/${propertyId}/toggle-favorite/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .property-meta i {
+        color: #666;
+        width: 20px;
+    }
+    
+    .owner-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .similar-property:hover {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
