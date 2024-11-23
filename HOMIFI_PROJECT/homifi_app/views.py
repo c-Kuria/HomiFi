@@ -8,19 +8,32 @@ from django.db.models import Q, F, ExpressionWrapper, FloatField
 from django.db.models.functions import ACos, Cos, Sin, Radians
 from django.core.paginator import Paginator
 from django.conf import settings
+from django.contrib.auth import login
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Property, PropertyImage, SavedSearch, Favorite
-from .forms import PropertyForm, PropertyImageFormSet
+from .models import Property, PropertyImage, SavedSearch, Favorite, User
+from .forms import PropertyForm, PropertyImageFormSet, UserRegistrationForm, UserProfileForm
 from .serializers import PropertySerializer
 import requests
 from math import radians, sin, cos, sqrt, atan2
 import json
+from django.contrib import messages
 
 def index(request):
     featured_properties = Property.objects.filter(is_available=True).order_by('-created_at')[:6]
     return render(request, 'index.html', {'featured_properties': featured_properties})
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('homifi_app:index')
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'auth/register.html', {'form': form})
 
 class PropertyListView(ListView):
     model = Property
@@ -139,6 +152,38 @@ class PropertyImageDeleteView(LoginRequiredMixin, View):
             image.delete()
             return JsonResponse({'status': 'success'})
         return JsonResponse({'status': 'error'}, status=403)
+
+@login_required
+def dashboard(request):
+    user_properties = Property.objects.filter(owner=request.user)
+    return render(request, 'dashboard/dashboard.html', {
+        'properties': user_properties
+    })
+
+@login_required
+def profile(request):
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            # Handle profile picture removal
+            if request.POST.get('remove_picture') == 'true' and request.user.profile_picture:
+                # Delete the old file
+                request.user.profile_picture.delete(save=False)
+                # Clear the field
+                request.user.profile_picture = None
+            
+            user = form.save()
+            messages.success(request, 'Your profile has been updated successfully.')
+            return redirect('homifi_app:profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = UserProfileForm(instance=request.user)
+    
+    return render(request, 'auth/profile.html', {
+        'form': form,
+        'page_title': 'Edit Profile',
+    })
 
 # API Views
 class PropertyAPIView(generics.ListCreateAPIView):

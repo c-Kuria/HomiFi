@@ -24,12 +24,34 @@ class UserProfileForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'phone_number', 'profile_picture']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'phone_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': '+1 (123) 456-7890'
+            }),
+            'profile_picture': forms.FileInput(attrs={'class': 'form-control'})
+        }
+        help_texts = {
+            'phone_number': 'Enter your phone number in international format',
+            'profile_picture': 'Upload a square image for best results. Maximum size: 5MB'
+        }
         
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.exclude(pk=self.instance.pk).filter(email=email).exists():
             raise forms.ValidationError('This email address is already in use.')
         return email
+    
+    def clean_profile_picture(self):
+        profile_picture = self.cleaned_data.get('profile_picture')
+        if profile_picture:
+            if profile_picture.size > 5 * 1024 * 1024:  # 5MB limit
+                raise forms.ValidationError('Image file size must be less than 5MB.')
+            if not profile_picture.content_type.startswith('image'):
+                raise forms.ValidationError('File must be an image.')
+        return profile_picture
 
 class PropertyForm(forms.ModelForm):
     class Meta:

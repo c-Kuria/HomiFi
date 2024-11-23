@@ -11,10 +11,10 @@
         <p class="lead mb-4">Browse through thousands of properties for sale and rent. Your perfect home is just a click away.</p>
         <div class="cta-buttons">
             {% if not user.is_authenticated %}
-                <a href="{% url 'register' %}" class="btn btn-primary btn-lg me-3">Get Started</a>
-                <a href="{% url 'login' %}" class="btn btn-outline-primary btn-lg">Sign In</a>
+                <a href="{% url 'homifi_app:register' %}" class="btn btn-primary btn-lg me-3">Get Started</a>
+                <a href="{% url 'homifi_app:login' %}" class="btn btn-outline-primary btn-lg">Sign In</a>
             {% else %}
-                <a href="{% url 'properties' %}" class="btn btn-primary btn-lg">Browse Properties</a>
+                <a href="{% url 'homifi_app:property_list' %}" class="btn btn-primary btn-lg">Browse Properties</a>
             {% endif %}
         </div>
     </div>
@@ -23,7 +23,7 @@
 <!-- Search Section -->
 <section class="search-section py-5 bg-light">
     <div class="container">
-        <form class="row g-3" method="get" action="{% url 'properties' %}">
+        <form class="row g-3" method="get" action="{% url 'homifi_app:property_list' %}">
             <div class="col-md-4">
                 <input type="text" class="form-control" name="location" placeholder="Location">
             </div>
@@ -100,7 +100,7 @@
                         <h5 class="card-title">{{ property.title }}</h5>
                         <p class="card-text text-muted">{{ property.location }}</p>
                         <p class="card-text"><strong>${{ property.price }}</strong></p>
-                        <a href="{% url 'property_detail' property.id %}" class="btn btn-outline-primary">View Details</a>
+                        <a href="{% url 'homifi_app:property_detail' property.id %}" class="btn btn-outline-primary">View Details</a>
                     </div>
                 </div>
             </div>
