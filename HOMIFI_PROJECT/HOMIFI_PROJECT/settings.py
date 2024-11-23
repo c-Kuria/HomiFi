@@ -193,6 +193,11 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
 }
 
+# Authentication Settings
+LOGIN_REDIRECT_URL = 'homifi_app:dashboard'
+LOGOUT_REDIRECT_URL = 'homifi_app:index'
+LOGIN_URL = 'homifi_app:login'
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 

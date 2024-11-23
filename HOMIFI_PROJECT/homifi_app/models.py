@@ -173,3 +173,32 @@ class SavedSearch(models.Model):
             # Update last notification time
             self.last_notification_sent = timezone.now()
             self.save()
+
+class Inquiry(models.Model):
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='inquiries')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_inquiries')
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Inquiries"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Inquiry from {self.name} about {self.property.title}"
+
+class LinkedAccount(models.Model):
+    primary_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='primary_account')
+    secondary_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='secondary_account')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('primary_user', 'secondary_user')
+
+    def __str__(self):
+        return f"{self.primary_user.username} -> {self.secondary_user.username}"

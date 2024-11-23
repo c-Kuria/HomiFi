@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Accounts - HomiFi{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Manage Your Accounts</h2>
+                    
+                    <!-- Current Account Info -->
+                    <div class="current-account mb-4">
+                        <h5>Current Account</h5>
+                        <div class="d-flex align-items-center p-3 bg-light rounded">
+                            {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" style="width: 48px; height: 48px;">
+                            {% else %}
+                                <i class="fas fa-user-circle me-3" style="font-size: 48px;"></i>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">{{ user.username }}</h6>
+                                <small class="text-muted">Role: {{ user.role }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Linked Accounts -->
+                    {% if linked_accounts %}
+                        <h5>Linked Accounts</h5>
+                        <div class="list-group mb-4">
+                            {% for linked in linked_accounts %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        {% if linked.primary_user == user %}
+                                            {% with other_user=linked.secondary_user %}
+                                                {% if other_user.profile_picture %}
+                                                    <img src="{{ other_user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" style="width: 40px; height: 40px;">
+                                                {% else %}
+                                                    <i class="fas fa-user-circle me-3" style="font-size: 40px;"></i>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ other_user.username }}</h6>
+                                                    <small class="text-muted">Role: {{ other_user.role }}</small>
+                                                </div>
+                                            {% endwith %}
+                                        {% else %}
+                                            {% with other_user=linked.primary_user %}
+                                                {% if other_user.profile_picture %}
+                                                    <img src="{{ other_user.profile_picture.url }}" alt="Profile" class="rounded-circle me-3" style="width: 40px; height: 40px;">
+                                                {% else %}
+                                                    <i class="fas fa-user-circle me-3" style="font-size: 40px;"></i>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ other_user.username }}</h6>
+                                                    <small class="text-muted">Role: {{ other_user.role }}</small>
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+                                    </div>
+                                    {% if linked.primary_user == user %}
+                                        <a href="{% url 'homifi_app:switch_account' linked.secondary_user.id %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-exchange-alt me-1"></i>Switch
+                                        </a>
+                                    {% else %}
+                                        <a href="{% url 'homifi_app:switch_account' linked.primary_user.id %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-exchange-alt me-1"></i>Switch
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Create New Account -->
+                    <div class="text-center">
+                        <a href="{% url 'homifi_app:create_linked_account' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Create New Linked Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

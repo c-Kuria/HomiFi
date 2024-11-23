@@ -8,11 +8,11 @@ from django.db.models import Q, F, ExpressionWrapper, FloatField
 from django.db.models.functions import ACos, Cos, Sin, Radians
 from django.core.paginator import Paginator
 from django.conf import settings
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from rest_framework import generics, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Property, PropertyImage, SavedSearch, Favorite, User
+from .models import Property, PropertyImage, SavedSearch, Favorite, User, Inquiry, LinkedAccount
 from .forms import PropertyForm, PropertyImageFormSet, UserRegistrationForm, UserProfileForm
 from .serializers import PropertySerializer
 import requests
@@ -71,11 +71,14 @@ class PropertyDetailView(DetailView):
             ).exists()
         return context
 
-class PropertyCreateView(LoginRequiredMixin, CreateView):
+class PropertyCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Property
     form_class = PropertyForm
     template_name = 'properties/property_form.html'
-    success_url = reverse_lazy('property_list')
+    success_url = reverse_lazy('homifi_app:dashboard')
+
+    def test_func(self):
+        return self.request.user.role == 'landlord'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,23 +93,37 @@ class PropertyCreateView(LoginRequiredMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        form.instance.owner = self.request.user
-        context = self.get_context_data()
-        image_formset = context['image_formset']
-        
-        if image_formset.is_valid():
-            response = super().form_valid(form)
-            image_formset.instance = self.object
-            image_formset.save()
-            return response
-        else:
-            return self.render_to_response(self.get_context_data(form=form))
+        try:
+            form.instance.owner = self.request.user
+            context = self.get_context_data()
+            image_formset = context['image_formset']
+            
+            if image_formset.is_valid():
+                self.object = form.save()
+                image_formset.instance = self.object
+                image_formset.save()
+                messages.success(self.request, 'Property created successfully!')
+                return redirect(self.success_url)
+            else:
+                messages.error(self.request, 'Please correct the errors in the image upload form.')
+                return self.form_invalid(form)
+        except Exception as e:
+            messages.error(self.request, f'Error creating property: {str(e)}')
+            return self.form_invalid(form)
+
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+    def handle_no_permission(self):
+        messages.error(self.request, 'Only landlords can create properties.')
+        return redirect('homifi_app:index')
 
 class PropertyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Property
     form_class = PropertyForm
     template_name = 'properties/property_form.html'
-    success_url = reverse_lazy('property_list')
+    success_url = reverse_lazy('homifi_app:dashboard')
 
     def test_func(self):
         property = self.get_object()
@@ -138,7 +155,7 @@ class PropertyUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 class PropertyDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Property
-    success_url = reverse_lazy('property_list')
+    success_url = reverse_lazy('homifi_app:dashboard')
     template_name = 'properties/property_confirm_delete.html'
 
     def test_func(self):
@@ -153,12 +170,62 @@ class PropertyImageDeleteView(LoginRequiredMixin, View):
             return JsonResponse({'status': 'success'})
         return JsonResponse({'status': 'error'}, status=403)
 
+class ContactOwnerView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        property = get_object_or_404(Property, pk=pk)
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        message = request.POST.get('message')
+        
+        # Create inquiry
+        Inquiry.objects.create(
+            property=property,
+            inquirer=request.user,
+            name=name,
+            email=email,
+            phone=phone,
+            message=message
+        )
+        
+        messages.success(request, 'Your inquiry has been sent to the property owner.')
+        return redirect('homifi_app:property_detail', pk=pk)
+
 @login_required
 def dashboard(request):
-    user_properties = Property.objects.filter(owner=request.user)
-    return render(request, 'dashboard/dashboard.html', {
-        'properties': user_properties
-    })
+    context = {}
+    
+    if request.user.role == 'landlord':
+        # Landlord-specific data
+        properties = Property.objects.filter(owner=request.user)
+        inquiries = Inquiry.objects.filter(property__owner=request.user).select_related('property', 'user')
+        
+        context.update({
+            'properties': properties,
+            'properties_count': properties.count(),
+            'active_listings': properties.filter(is_available=True).count(),
+            'total_views': sum(p.view_count for p in properties) if hasattr(Property, 'view_count') else 0,
+            'inquiries': inquiries,
+            'inquiries_count': inquiries.count(),
+            'page_title': 'Landlord Dashboard',
+        })
+    else:
+        # Buyer-specific data
+        favorites = Favorite.objects.filter(user=request.user).select_related('property')
+        inquiries = Inquiry.objects.filter(user=request.user).select_related('property')
+        
+        context.update({
+            'favorites': favorites,
+            'favorites_count': favorites.count(),
+            'recent_views': request.user.property_views.count() if hasattr(request.user, 'property_views') else 0,
+            'inquiries': inquiries,
+            'sent_inquiries': inquiries.count(),
+            'page_title': 'Buyer Dashboard',
+        })
+    
+    messages.info(request, f'Welcome to your {context["page_title"]}!')
+    return render(request, 'dashboard/dashboard.html', context)
+
 
 @login_required
 def profile(request):
@@ -184,6 +251,85 @@ def profile(request):
         'form': form,
         'page_title': 'Edit Profile',
     })
+
+@login_required
+def create_linked_account(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            # Create new user account
+            new_user = form.save()
+            
+            # Create linked account relationship
+            LinkedAccount.objects.create(
+                primary_user=request.user,
+                secondary_user=new_user
+            )
+            
+            messages.success(request, 'Secondary account created successfully!')
+            return redirect('homifi_app:profile')
+    else:
+        form = UserRegistrationForm()
+    
+    return render(request, 'auth/create_linked_account.html', {'form': form})
+
+@login_required
+def switch_account(request, account_id):
+    try:
+        # Find the linked account
+        linked_account = LinkedAccount.objects.get(
+            Q(primary_user=request.user, secondary_user_id=account_id) |
+            Q(secondary_user=request.user, primary_user_id=account_id)
+        )
+        
+        # Get the account to switch to
+        switch_to_user = linked_account.secondary_user if linked_account.primary_user == request.user else linked_account.primary_user
+        
+        # Log out current user
+        logout(request)
+        
+        # Log in as the other user
+        login(request, switch_to_user)
+        messages.success(request, f'Switched to account: {switch_to_user.username}')
+        
+    except LinkedAccount.DoesNotExist:
+        messages.error(request, 'Invalid account switch request.')
+    
+    return redirect('homifi_app:index')
+
+@login_required
+def manage_accounts(request):
+    # Get all linked accounts where user is either primary or secondary
+    linked_accounts = LinkedAccount.objects.filter(
+        Q(primary_user=request.user) |
+        Q(secondary_user=request.user)
+    ).select_related('primary_user', 'secondary_user')
+    
+    return render(request, 'auth/manage_accounts.html', {
+        'linked_accounts': linked_accounts
+    })
+
+@login_required
+def inquiry_detail_view(request, pk):
+    inquiry = get_object_or_404(Inquiry, pk=pk)
+    
+    # Check if user has permission to view this inquiry
+    if request.user != inquiry.user and request.user != inquiry.property.owner:
+        messages.error(request, "You don't have permission to view this inquiry.")
+        return redirect('homifi_app:dashboard')
+    
+    # Mark inquiry as read if viewing as property owner
+    if request.user == inquiry.property.owner and not inquiry.is_read:
+        inquiry.is_read = True
+        inquiry.save()
+    
+    context = {
+        'inquiry': inquiry,
+        'property': inquiry.property,
+        'is_owner': request.user == inquiry.property.owner,
+    }
+    
+    return render(request, 'enquiries/enquiry_detail.html', context)
 
 # API Views
 class PropertyAPIView(generics.ListCreateAPIView):

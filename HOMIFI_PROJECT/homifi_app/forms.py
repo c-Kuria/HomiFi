@@ -98,7 +98,13 @@ class PropertyImageForm(forms.ModelForm):
         model = PropertyImage
         fields = ['image', 'is_primary']
         widgets = {
-            'is_primary': forms.CheckboxInput(),
+            'image': forms.FileInput(attrs={
+                'class': 'form-control',
+                'accept': 'image/*'
+            }),
+            'is_primary': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
 
 PropertyImageFormSet = forms.inlineformset_factory(
@@ -107,7 +113,9 @@ PropertyImageFormSet = forms.inlineformset_factory(
     form=PropertyImageForm,
     extra=1,
     can_delete=True,
-    max_num=10
+    max_num=10,
+    validate_max=True,
+    fields=['image', 'is_primary']
 )
 
 class PropertySearchForm(forms.Form):

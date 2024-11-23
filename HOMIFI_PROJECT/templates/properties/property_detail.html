@@ -109,21 +109,28 @@
                 <div class="card-body">
                     <h3 class="card-title">Contact Owner</h3>
                     <div class="owner-info mb-4">
-                        <img src="{{ property.owner.profile_picture.url|default:'static/images/default-avatar.jpg' }}" 
-                             class="rounded-circle me-2" alt="Owner" style="width: 50px; height: 50px;">
+                        {% if property.owner.profile_picture %}
+                            <img src="{{ property.owner.profile_picture.url }}" 
+                                 class="rounded-circle me-2" alt="Owner" style="width: 50px; height: 50px;">
+                        {% else %}
+                            <img src="{% static 'images/default-avatar.jpg' %}" 
+                                 class="rounded-circle me-2" alt="Owner" style="width: 50px; height: 50px;">
+                        {% endif %}
                         <div>
                             <h4 class="mb-0">{{ property.owner.get_full_name|default:property.owner.username }}</h4>
                             <p class="text-muted mb-0">Property Owner</p>
                         </div>
                     </div>
 
-                    <form method="post" action="{% url 'contact_owner' property.id %}">
+                    <form method="post" action="{% url 'homifi_app:contact_owner' property.id %}">
                         {% csrf_token %}
                         <div class="mb-3">
-                            <input type="text" class="form-control" name="name" placeholder="Your Name" required>
+                            <input type="text" class="form-control" name="name" placeholder="Your Name" required
+                                   value="{{ user.get_full_name|default:user.username }}">
                         </div>
                         <div class="mb-3">
-                            <input type="email" class="form-control" name="email" placeholder="Your Email" required>
+                            <input type="email" class="form-control" name="email" placeholder="Your Email" required
+                                   value="{{ user.email }}">
                         </div>
                         <div class="mb-3">
                             <input type="tel" class="form-control" name="phone" placeholder="Your Phone">
@@ -223,6 +230,37 @@ function toggleFavorite(propertyId) {
 
 {% block extra_css %}
 <style>
+    /* Margin utilities */
+    .mb-4 {
+        margin-bottom: 5rem !important;
+    }
+    
+    .mb-3 {
+        margin-bottom: 3rem !important;
+    }
+    
+    /* Property gallery styles */
+    .property-gallery {
+        margin-bottom: 5rem !important;
+    }
+    
+    /* Property features styles */
+    .property-features {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    /* Property meta styles */
+    .property-meta {
+        margin-bottom: 5rem !important;
+    }
+    
+    /* Card styles */
+    .card {
+        margin-bottom: 5rem !important;
+    }
+    
     .property-meta i {
         color: #666;
         width: 20px;

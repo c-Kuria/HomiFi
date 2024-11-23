@@ -45,6 +45,7 @@ urlpatterns = [
     path('properties/<int:pk>/', views.PropertyDetailView.as_view(), name='property_detail'),
     path('properties/<int:pk>/edit/', views.PropertyUpdateView.as_view(), name='property_edit'),
     path('properties/<int:pk>/delete/', views.PropertyDeleteView.as_view(), name='property_delete'),
+    path('properties/<int:pk>/contact/', views.ContactOwnerView.as_view(), name='contact_owner'),
     
     # Property Images
     path('api/property-images/<int:pk>/', views.PropertyImageDeleteView.as_view(), name='property_image_delete'),
@@ -52,4 +53,12 @@ urlpatterns = [
     # API Endpoints
     path('api/properties/', views.PropertyAPIView.as_view(), name='property_api'),
     path('api/properties/<int:pk>/', views.PropertyDetailAPIView.as_view(), name='property_detail_api'),
+    
+    # Inquiry URLs
+    path('inquiries/<int:pk>/detail/', views.inquiry_detail_view, name='inquiry_detail'),
+    
+    # Account Management URLs
+    path('accounts/create-linked/', views.create_linked_account, name='create_linked_account'),
+    path('accounts/switch/<int:account_id>/', views.switch_account, name='switch_account'),
+    path('accounts/manage/', views.manage_accounts, name='manage_accounts'),
 ]

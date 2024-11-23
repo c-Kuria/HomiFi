@@ -13,6 +13,31 @@
                         {% if property %}Edit Property{% else %}Add New Property{% endif %}
                     </h2>
 
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            <strong>Please correct the following errors:</strong>
+                            <ul>
+                                {% for field in form %}
+                                    {% for error in field.errors %}
+                                        <li>{{ field.label }}: {{ error }}</li>
+                                    {% endfor %}
+                                {% endfor %}
+                                {% for error in form.non_field_errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+
                     <form method="post" enctype="multipart/form-data" id="propertyForm" novalidate>
                         {% csrf_token %}
                         
@@ -21,38 +46,50 @@
                             <h4 class="mb-3">Basic Information</h4>
                             <div class="col-md-6 mb-3">
                                 <label for="title" class="form-label">Property Title*</label>
-                                <input type="text" class="form-control" id="title" name="title" 
-                                       value="{{ property.title }}" required>
+                                <input type="text" class="form-control {% if form.title.errors %}is-invalid{% endif %}" 
+                                       id="title" name="title" value="{{ form.title.value|default:'' }}" required>
+                                {% if form.title.errors %}
+                                    <div class="invalid-feedback">{{ form.title.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="price" class="form-label">Price*</label>
                                 <div class="input-group">
                                     <span class="input-group-text">$</span>
-                                    <input type="number" class="form-control" id="price" name="price" 
-                                           value="{{ property.price }}" required>
+                                    <input type="number" class="form-control {% if form.price.errors %}is-invalid{% endif %}" 
+                                           id="price" name="price" value="{{ form.price.value|default:'' }}" required>
+                                    {% if form.price.errors %}
+                                        <div class="invalid-feedback">{{ form.price.errors|join:", " }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="property_type" class="form-label">Property Type*</label>
-                                <select class="form-select" id="property_type" name="property_type" required>
-                                    <option value="">Select Type</option>
-                                    {% for type, label in property_types %}
-                                        <option value="{{ type }}" {% if property.property_type == type %}selected{% endif %}>
-                                            {{ label }}
-                                        </option>
-                                    {% endfor %}
+                                <select class="form-select {% if form.property_type.errors %}is-invalid{% endif %}" 
+                                        id="property_type" name="property_type" required>
+                                    <option value="" {% if not form.property_type.value %}selected{% endif %}>Select property type</option>
+                                    <option value="house" {% if form.property_type.value == 'house' %}selected{% endif %}>House</option>
+                                    <option value="apartment" {% if form.property_type.value == 'apartment' %}selected{% endif %}>Apartment</option>
+                                    <option value="condo" {% if form.property_type.value == 'condo' %}selected{% endif %}>Condo</option>
+                                    <option value="townhouse" {% if form.property_type.value == 'townhouse' %}selected{% endif %}>Townhouse</option>
+                                    <option value="land" {% if form.property_type.value == 'land' %}selected{% endif %}>Land</option>
+                                    <option value="commercial" {% if form.property_type.value == 'commercial' %}selected{% endif %}>Commercial</option>
                                 </select>
+                                {% if form.property_type.errors %}
+                                    <div class="invalid-feedback">{{ form.property_type.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="listing_type" class="form-label">Listing Type*</label>
-                                <select class="form-select" id="listing_type" name="listing_type" required>
-                                    <option value="">Select Type</option>
-                                    {% for type, label in listing_types %}
-                                        <option value="{{ type }}" {% if property.listing_type == type %}selected{% endif %}>
-                                            {{ label }}
-                                        </option>
-                                    {% endfor %}
+                                <select class="form-select {% if form.listing_type.errors %}is-invalid{% endif %}" 
+                                        id="listing_type" name="listing_type" required>
+                                    <option value="" {% if not form.listing_type.value %}selected{% endif %}>Select listing type</option>
+                                    <option value="sale" {% if form.listing_type.value == 'sale' %}selected{% endif %}>For Sale</option>
+                                    <option value="rent" {% if form.listing_type.value == 'rent' %}selected{% endif %}>For Rent</option>
                                 </select>
+                                {% if form.listing_type.errors %}
+                                    <div class="invalid-feedback">{{ form.listing_type.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -61,23 +98,35 @@
                             <h4 class="mb-3">Property Details</h4>
                             <div class="col-md-4 mb-3">
                                 <label for="bedrooms" class="form-label">Bedrooms*</label>
-                                <input type="number" class="form-control" id="bedrooms" name="bedrooms" 
-                                       value="{{ property.bedrooms }}" required>
+                                <input type="number" class="form-control {% if form.bedrooms.errors %}is-invalid{% endif %}" 
+                                       id="bedrooms" name="bedrooms" value="{{ form.bedrooms.value|default:'' }}" required>
+                                {% if form.bedrooms.errors %}
+                                    <div class="invalid-feedback">{{ form.bedrooms.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="bathrooms" class="form-label">Bathrooms*</label>
-                                <input type="number" class="form-control" id="bathrooms" name="bathrooms" 
-                                       value="{{ property.bathrooms }}" step="0.5" required>
+                                <input type="number" class="form-control {% if form.bathrooms.errors %}is-invalid{% endif %}" 
+                                       id="bathrooms" name="bathrooms" value="{{ form.bathrooms.value|default:'' }}" step="0.5" required>
+                                {% if form.bathrooms.errors %}
+                                    <div class="invalid-feedback">{{ form.bathrooms.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="area" class="form-label">Area (sq ft)*</label>
-                                <input type="number" class="form-control" id="area" name="area" 
-                                       value="{{ property.area }}" required>
+                                <input type="number" class="form-control {% if form.area.errors %}is-invalid{% endif %}" 
+                                       id="area" name="area" value="{{ form.area.value|default:'' }}" required>
+                                {% if form.area.errors %}
+                                    <div class="invalid-feedback">{{ form.area.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-12 mb-3">
                                 <label for="description" class="form-label">Description*</label>
-                                <textarea class="form-control" id="description" name="description" 
-                                          rows="4" required>{{ property.description }}</textarea>
+                                <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                          id="description" name="description" rows="4" required>{{ form.description.value|default:'' }}</textarea>
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback">{{ form.description.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
@@ -86,56 +135,100 @@
                             <h4 class="mb-3">Location</h4>
                             <div class="col-12 mb-3">
                                 <label for="address" class="form-label">Address*</label>
-                                <input type="text" class="form-control" id="address" name="address" 
-                                       value="{{ property.address }}" required>
+                                <input type="text" class="form-control {% if form.address.errors %}is-invalid{% endif %}" 
+                                       id="address" name="address" value="{{ form.address.value|default:'' }}" required>
+                                {% if form.address.errors %}
+                                    <div class="invalid-feedback">{{ form.address.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="city" class="form-label">City*</label>
-                                <input type="text" class="form-control" id="city" name="city" 
-                                       value="{{ property.city }}" required>
+                                <input type="text" class="form-control {% if form.city.errors %}is-invalid{% endif %}" 
+                                       id="city" name="city" value="{{ form.city.value|default:'' }}" required>
+                                {% if form.city.errors %}
+                                    <div class="invalid-feedback">{{ form.city.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="state" class="form-label">State*</label>
-                                <input type="text" class="form-control" id="state" name="state" 
-                                       value="{{ property.state }}" required>
+                                <input type="text" class="form-control {% if form.state.errors %}is-invalid{% endif %}" 
+                                       id="state" name="state" value="{{ form.state.value|default:'' }}" required>
+                                {% if form.state.errors %}
+                                    <div class="invalid-feedback">{{ form.state.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="zip_code" class="form-label">ZIP Code*</label>
-                                <input type="text" class="form-control" id="zip_code" name="zip_code" 
-                                       value="{{ property.zip_code }}" required>
+                                <input type="text" class="form-control {% if form.zip_code.errors %}is-invalid{% endif %}" 
+                                       id="zip_code" name="zip_code" value="{{ form.zip_code.value|default:'' }}" required>
+                                {% if form.zip_code.errors %}
+                                    <div class="invalid-feedback">{{ form.zip_code.errors|join:", " }}</div>
+                                {% endif %}
                             </div>
                         </div>
 
                         <!-- Images -->
                         <div class="row mb-4">
                             <h4 class="mb-3">Property Images</h4>
-                            <div class="col-12 mb-3">
-                                <label for="images" class="form-label">Upload Images</label>
-                                <input type="file" class="form-control" id="images" name="images" 
-                                       multiple accept="image/*">
-                                <small class="text-muted">You can select multiple images. First image will be the primary image.</small>
+                            <div class="col-12">
+                                {{ image_formset.management_form }}
+                                
+                                {% for form in image_formset.forms %}
+                                    <div class="image-form mb-3">
+                                        <div class="row align-items-end">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Image</label>
+                                                {{ form.image }}
+                                                {% if form.image.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.image.errors|join:", " }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-check">
+                                                    {{ form.is_primary }}
+                                                    <label class="form-check-label" for="{{ form.is_primary.id_for_label }}">
+                                                        Set as primary image
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            {% if form.instance.pk %}
+                                                <div class="col-md-2">
+                                                    {{ form.DELETE }}
+                                                    <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                        Delete
+                                                    </label>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        {% for hidden in form.hidden_fields %}
+                                            {{ hidden }}
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                                
+                                <div class="text-end mb-3">
+                                    <button type="button" class="btn btn-outline-primary" id="add-image">
+                                        <i class="fas fa-plus"></i> Add Another Image
+                                    </button>
+                                </div>
                             </div>
                             
                             {% if property and property.images.exists %}
-                                <div class="col-12">
-                                    <h5 class="mb-3">Current Images</h5>
-                                    <div class="row" id="existingImages">
+                                <div class="col-12 mt-3">
+                                    <h5>Current Images</h5>
+                                    <div class="row">
                                         {% for image in property.images.all %}
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-md-4 mb-3">
                                                 <div class="card">
-                                                    <img src="{{ image.image.url }}" class="card-img-top" 
-                                                         alt="Property Image" style="height: 150px; object-fit: cover;">
-                                                    <div class="card-body p-2">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="radio" 
-                                                                   name="primary_image" value="{{ image.id }}"
-                                                                   {% if image.is_primary %}checked{% endif %}>
-                                                            <label class="form-check-label">Primary</label>
-                                                        </div>
-                                                        <button type="button" class="btn btn-sm btn-danger w-100"
-                                                                onclick="deleteImage({{ image.id }})">
-                                                            Delete
-                                                        </button>
+                                                    <img src="{{ image.image.url }}" class="card-img-top" alt="Property Image">
+                                                    <div class="card-body">
+                                                        <p class="card-text">
+                                                            {% if image.is_primary %}
+                                                                <span class="badge bg-primary">Primary Image</span>
+                                                            {% endif %}
+                                                        </p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -173,7 +266,7 @@
                                 <button type="submit" class="btn btn-primary px-5">
                                     {% if property %}Update Property{% else %}Add Property{% endif %}
                                 </button>
-                                <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-5">Cancel</a>
+                                <a href="{% url 'homifi_app:index' %}" class="btn btn-outline-secondary px-5">Cancel</a>
                             </div>
                         </div>
                     </form>
@@ -186,6 +279,48 @@
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addImageBtn = document.getElementById('add-image');
+    const imageFormsContainer = document.querySelector('.col-12');
+    const totalFormsInput = document.querySelector('[name="image_formset-TOTAL_FORMS"]');
+    
+    addImageBtn.addEventListener('click', function() {
+        const forms = document.querySelectorAll('.image-form');
+        const formNum = forms.length;
+        const newForm = forms[0].cloneNode(true);
+        
+        // Update form index
+        newForm.innerHTML = newForm.innerHTML.replaceAll(
+            /image_formset-0/g,
+            `image_formset-${formNum}`
+        );
+        
+        // Clear form values
+        newForm.querySelectorAll('input').forEach(input => {
+            if (input.type === 'file') {
+                input.value = '';
+            } else if (input.type === 'checkbox') {
+                input.checked = false;
+            }
+        });
+        
+        // Insert before the "Add Another Image" button
+        addImageBtn.parentElement.insertAdjacentElement('beforebegin', newForm);
+        
+        // Update total forms count
+        totalFormsInput.value = formNum + 1;
+    });
+});
+
+// Form validation
+document.getElementById('propertyForm').addEventListener('submit', function(e) {
+    if (!this.checkValidity()) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    this.classList.add('was-validated');
+});
+
 function addFeature() {
     const featuresList = document.getElementById('featuresList');
     const featureDiv = document.createElement('div');
@@ -216,15 +351,6 @@ function deleteImage(imageId) {
         });
     }
 }
-
-// Form validation
-document.getElementById('propertyForm').addEventListener('submit', function(e) {
-    if (!this.checkValidity()) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-    this.classList.add('was-validated');
-});
 </script>
 {% endblock %}
 

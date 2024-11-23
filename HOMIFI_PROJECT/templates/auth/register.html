@@ -3,53 +3,302 @@
 
 {% block title %}Register - HomiFi{% endblock %}
 
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: calc(100vh - var(--nav-height) - 2rem);
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .auth-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+    
+    .auth-card .card-body {
+        padding: 3rem;
+    }
+    
+    .auth-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 2rem;
+    }
+    
+    .auth-subtitle {
+        color: #6c757d;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+    
+    .form-control {
+        border-radius: 10px;
+        padding: 0.8rem 1.2rem;
+        border: 2px solid #e1e1e1;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--secondary-color);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.1);
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .btn-primary {
+        padding: 0.8rem;
+        border-radius: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
+    }
+    
+    .auth-links {
+        margin-top: 2rem;
+    }
+    
+    .auth-links a {
+        color: var(--secondary-color);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .auth-links a:hover {
+        color: var(--primary-color);
+    }
+    
+    .role-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .role-option {
+        flex: 1;
+        text-align: center;
+        padding: 1.5rem;
+        border: 2px solid #e1e1e1;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .role-option:hover {
+        border-color: var(--secondary-color);
+        background-color: rgba(52, 152, 219, 0.05);
+    }
+    
+    .role-option.selected {
+        border-color: var(--secondary-color);
+        background-color: rgba(52, 152, 219, 0.1);
+    }
+    
+    .role-option i {
+        font-size: 2rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .additional-fields {
+        display: none;
+        animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const roleOptions = document.querySelectorAll('.role-option');
+        const additionalFields = document.getElementById('additionalFields');
+        const roleInput = document.getElementById('role');
+        
+        roleOptions.forEach(option => {
+            option.addEventListener('click', function() {
+                // Remove selected class from all options
+                roleOptions.forEach(opt => opt.classList.remove('selected'));
+                // Add selected class to clicked option
+                this.classList.add('selected');
+                
+                // Update hidden role input
+                const role = this.getAttribute('data-role');
+                roleInput.value = role;
+                
+                // Show/hide additional fields based on role
+                if (role === 'renter' || role === 'landlord') {
+                    additionalFields.style.display = 'block';
+                } else {
+                    additionalFields.style.display = 'none';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <div class="card shadow">
-            <div class="card-body">
-                <h2 class="card-title text-center mb-4">Create an Account</h2>
-                <form method="post" novalidate>
-                    {% csrf_token %}
-                    
-                    {% for field in form %}
-                    <div class="mb-3">
-                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            {% for error in field.errors %}
-                                <div class="invalid-feedback d-block">{{ error }}</div>
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="auth-card card">
+                    <div class="card-body">
+                        <h2 class="auth-title text-center">Create Account</h2>
+                        <p class="auth-subtitle">Join HomiFi and start your journey to find the perfect home</p>
+                        
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
                             {% endfor %}
                         {% endif %}
-                        {% if field.help_text %}
-                            <small class="form-text text-muted">{{ field.help_text }}</small>
-                        {% endif %}
-                    </div>
-                    {% endfor %}
 
-                    <div class="mb-3">
-                        <label class="form-label">User Role</label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="buyer" id="roleBuyer" checked>
-                            <label class="form-check-label" for="roleBuyer">
-                                Buyer/Viewer
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="role" value="landlord" id="roleLandlord">
-                            <label class="form-check-label" for="roleLandlord">
-                                Renter/Landlord
-                            </label>
-                        </div>
-                    </div>
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Role Selection -->
+                            <div class="role-selector">
+                                <div class="role-option" data-role="renter">
+                                    <i class="fas fa-home"></i>
+                                    <h4>Renter</h4>
+                                    <p class="text-muted">Looking for a property</p>
+                                </div>
+                                <div class="role-option" data-role="landlord">
+                                    <i class="fas fa-key"></i>
+                                    <h4>Landlord</h4>
+                                    <p class="text-muted">Listing properties</p>
+                                </div>
+                            </div>
+                            <input type="hidden" name="role" id="role" value="">
+                            
+                            <div class="mb-4">
+                                <label for="username" class="form-label">Username</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-user text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" required>
+                                </div>
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.username.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-envelope text-muted"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.email.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Additional Fields (shown only for renter/landlord) -->
+                            <div id="additionalFields" class="additional-fields">
+                                <div class="mb-4">
+                                    <label for="phone" class="form-label">Phone Number</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent">
+                                            <i class="fas fa-phone text-muted"></i>
+                                        </span>
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                                               placeholder="123-456-7890">
+                                    </div>
+                                    <small class="text-muted">Format: 123-456-7890</small>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label for="location" class="form-label">Preferred Location</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-transparent">
+                                            <i class="fas fa-map-marker-alt text-muted"></i>
+                                        </span>
+                                        <input type="text" class="form-control" id="location" name="location" 
+                                               placeholder="City, State">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password1" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-lock text-muted"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password1" name="password1" required>
+                                </div>
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password1.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password2" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-lock text-muted"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password2" name="password2" required>
+                                </div>
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password2.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Register</button>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-user-plus me-2"></i>Register
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="auth-links text-center">
+                            <p class="mb-0">Already have an account? <a href="{% url 'homifi_app:login' %}">Login here</a></p>
+                        </div>
                     </div>
-                </form>
-                
-                <div class="text-center mt-3">
-                    <p>Already have an account? <a href="{% url 'homifi_app:login' %}">Login here</a></p>
                 </div>
             </div>
         </div>

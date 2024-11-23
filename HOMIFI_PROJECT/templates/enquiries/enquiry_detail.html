@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - HomiFi{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Inquiry Details</h5>
+                    <span class="badge {% if inquiry.is_read %}bg-success{% else %}bg-warning{% endif %}">
+                        {% if inquiry.is_read %}Read{% else %}Unread{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <!-- Property Information -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Property</h6>
+                        <div class="d-flex align-items-center">
+                            <img src="{{ inquiry.property.images.first.image.url|default:'static/images/default-property.jpg' }}" 
+                                 alt="{{ inquiry.property.title }}" 
+                                 class="me-3" 
+                                 style="width: 100px; height: 100px; object-fit: cover;">
+                            <div>
+                                <h5 class="mb-1">{{ inquiry.property.title }}</h5>
+                                <p class="text-muted mb-0">{{ inquiry.property.address }}</p>
+                                <a href="{% url 'homifi_app:property_detail' inquiry.property.id %}" class="btn btn-sm btn-outline-primary mt-2">
+                                    View Property
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Inquiry Information -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-3">Inquiry Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>From:</strong> {{ inquiry.name }}</p>
+                                <p><strong>Email:</strong> {{ inquiry.email }}</p>
+                                <p><strong>Phone:</strong> {{ inquiry.phone|default:'Not provided' }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Date:</strong> {{ inquiry.created_at|date:"F j, Y" }}</p>
+                                <p><strong>Time:</strong> {{ inquiry.created_at|time:"g:i A" }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message -->
+                    <div>
+                        <h6 class="text-muted mb-3">Message</h6>
+                        <div class="p-3 bg-light rounded">
+                            {{ inquiry.message|linebreaks }}
+                        </div>
+                    </div>
+
+                    {% if user == inquiry.property.owner %}
+                        <!-- Reply Section for Property Owner -->
+                        <div class="mt-4">
+                            <form method="post" action="{% url 'homifi_app:inquiry_reply' inquiry.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="reply" class="form-label">Reply to Inquiry</label>
+                                    <textarea class="form-control" id="reply" name="reply" rows="4" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Send Reply</button>
+                            </form>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'homifi_app:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
