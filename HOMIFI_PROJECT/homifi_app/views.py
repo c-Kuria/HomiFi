@@ -26,11 +26,17 @@ def index(request):
 
 def register(request):
     if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
+        form = UserRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            return redirect('homifi_app:index')
+            try:
+                user = form.save()
+                login(request, user)
+                messages.success(request, 'Registration successful!')
+                return redirect('homifi_app:index')
+            except Exception as e:
+                form.add_error(None, str(e))
+        else:
+            pass
     else:
         form = UserRegistrationForm()
     return render(request, 'auth/register.html', {'form': form})

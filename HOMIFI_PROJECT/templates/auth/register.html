@@ -105,7 +105,7 @@
         background-color: rgba(52, 152, 219, 0.05);
     }
     
-    .role-option.selected {
+    .role-option.active {
         border-color: var(--secondary-color);
         background-color: rgba(52, 152, 219, 0.1);
     }
@@ -138,22 +138,20 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const roleOptions = document.querySelectorAll('.role-option');
-        const additionalFields = document.getElementById('additionalFields');
         const roleInput = document.getElementById('role');
-        
+        const additionalFields = document.getElementById('additionalFields');
+
         roleOptions.forEach(option => {
             option.addEventListener('click', function() {
-                // Remove selected class from all options
-                roleOptions.forEach(opt => opt.classList.remove('selected'));
-                // Add selected class to clicked option
-                this.classList.add('selected');
-                
-                // Update hidden role input
-                const role = this.getAttribute('data-role');
-                roleInput.value = role;
+                // Remove active class from all options
+                roleOptions.forEach(opt => opt.classList.remove('active'));
+                // Add active class to clicked option
+                this.classList.add('active');
+                // Set the role value
+                roleInput.value = this.getAttribute('data-role');
                 
                 // Show/hide additional fields based on role
-                if (role === 'renter' || role === 'landlord') {
+                if (this.getAttribute('data-role') === 'landlord') {
                     additionalFields.style.display = 'block';
                 } else {
                     additionalFields.style.display = 'none';
@@ -174,21 +172,28 @@
                         <h2 class="auth-title text-center">Create Account</h2>
                         <p class="auth-subtitle">Join HomiFi and start your journey to find the perfect home</p>
                         
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {{ form.non_field_errors|join:", " }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+
                         {% if messages %}
                             {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
                                     {{ message }}
                                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                                 </div>
                             {% endfor %}
                         {% endif %}
 
-                        <form method="post" novalidate>
+                        <form method="post" enctype="multipart/form-data" novalidate>
                             {% csrf_token %}
                             
                             <!-- Role Selection -->
                             <div class="role-selector">
-                                <div class="role-option" data-role="renter">
+                                <div class="role-option active" data-role="renter">
                                     <i class="fas fa-home"></i>
                                     <h4>Renter</h4>
                                     <p class="text-muted">Looking for a property</p>
@@ -199,8 +204,13 @@
                                     <p class="text-muted">Listing properties</p>
                                 </div>
                             </div>
-                            <input type="hidden" name="role" id="role" value="">
-                            
+                            <input type="hidden" name="role" id="role" value="renter">
+                            {% if form.role.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.role.errors|join:", " }}
+                                </div>
+                            {% endif %}
+
                             <div class="mb-4">
                                 <label for="username" class="form-label">Username</label>
                                 <div class="input-group">
@@ -231,6 +241,40 @@
                                 {% endif %}
                             </div>
                             
+                            <!-- Password Fields -->
+                            <div class="mb-4">
+                                <label for="password1" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-lock text-muted"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password1" name="password1" required>
+                                </div>
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password1.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                                {% if form.password1.help_text %}
+                                    <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                                {% endif %}
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="password2" class="form-label">Confirm Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-transparent">
+                                        <i class="fas fa-lock text-muted"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password2" name="password2" required>
+                                </div>
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password2.errors|join:", " }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
                             <!-- Additional Fields (shown only for renter/landlord) -->
                             <div id="additionalFields" class="additional-fields">
                                 <div class="mb-4">
@@ -239,9 +283,9 @@
                                         <span class="input-group-text bg-transparent">
                                             <i class="fas fa-phone text-muted"></i>
                                         </span>
-                                        <input type="tel" class="form-control" id="phone" name="phone" 
-                                               pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
-                                               placeholder="123-456-7890">
+                                        <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                        pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}"
+                                        placeholder="123-456-7890">
                                     </div>
                                     <small class="text-muted">Format: 123-456-7890</small>
                                 </div>
@@ -256,36 +300,6 @@
                                                placeholder="City, State">
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="password1" class="form-label">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-transparent">
-                                        <i class="fas fa-lock text-muted"></i>
-                                    </span>
-                                    <input type="password" class="form-control" id="password1" name="password1" required>
-                                </div>
-                                {% if form.password1.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.password1.errors|join:", " }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="password2" class="form-label">Confirm Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text bg-transparent">
-                                        <i class="fas fa-lock text-muted"></i>
-                                    </span>
-                                    <input type="password" class="form-control" id="password2" name="password2" required>
-                                </div>
-                                {% if form.password2.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {{ form.password2.errors|join:", " }}
-                                    </div>
-                                {% endif %}
                             </div>
 
                             <div class="d-grid">

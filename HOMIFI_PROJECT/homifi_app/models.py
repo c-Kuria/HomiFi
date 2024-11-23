@@ -9,16 +9,21 @@ from math import cos, radians
 
 class User(AbstractUser):
     USER_ROLES = [
-        ('buyer', 'Buyer/Viewer'),
-        ('landlord', 'Renter/Landlord'),
+        ('renter', 'Renter'),
+        ('landlord', 'Landlord'),
     ]
     
+    username = models.CharField(max_length=150)  # Remove unique constraint
     email = models.EmailField(unique=True)
-    role = models.CharField(max_length=10, choices=USER_ROLES, default='buyer')
+    role = models.CharField(max_length=10, choices=USER_ROLES, default='renter')
     phone_number = models.CharField(max_length=15, blank=True)
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True)
+    location = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'email'  # Use email as the unique identifier
+    REQUIRED_FIELDS = ['username']  # Username is still required but not unique
 
     def __str__(self):
         return self.username

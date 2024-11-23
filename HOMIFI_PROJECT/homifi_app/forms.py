@@ -8,17 +8,28 @@ class UserRegistrationForm(UserCreationForm):
     phone_number = forms.CharField(max_length=15, required=False)
     profile_picture = forms.ImageField(required=False)
     role = forms.ChoiceField(choices=User.USER_ROLES, required=True)
+    location = forms.CharField(max_length=255, required=False)
 
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2', 'role', 
-                 'phone_number', 'profile_picture']
+                 'phone_number', 'profile_picture', 'location']
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('This email address is already in use.')
         return email
+
+    def clean_username(self):
+        # Remove username uniqueness validation
+        return self.cleaned_data.get('username')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('role'):
+            raise forms.ValidationError('Please select a role (Renter or Landlord)')
+        return cleaned_data
 
 class UserProfileForm(forms.ModelForm):
     class Meta:
