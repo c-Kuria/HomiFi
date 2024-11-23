@@ -1,7 +1,8 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm, AuthenticationForm
 from django.core.validators import MinValueValidator
 from .models import User, Property, PropertyImage
+from django.contrib.auth import authenticate
 
 class UserRegistrationForm(UserCreationForm):
     email = forms.EmailField(required=True)
@@ -128,6 +129,26 @@ PropertyImageFormSet = forms.inlineformset_factory(
     validate_max=True,
     fields=['image', 'is_primary']
 )
+
+class UserLoginForm(AuthenticationForm):
+    username = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'}))
+
+    def clean(self):
+        email = self.cleaned_data.get('username')  # Django's auth form uses 'username' field
+        password = self.cleaned_data.get('password')
+
+        if email is not None and password:
+            self.user_cache = authenticate(self.request, username=email, password=password)
+            if self.user_cache is None:
+                raise forms.ValidationError(
+                    "Please enter a correct email and password. Note that both fields are case-sensitive.",
+                    code='invalid_login'
+                )
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
+        return self.cleaned_data
 
 class PropertySearchForm(forms.Form):
     query = forms.CharField(required=False)

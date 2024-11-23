@@ -8,7 +8,7 @@
 <section class="hero-section text-center py-5">
     <div class="container">
         <h1 class="display-4 mb-4">Find Your Dream Home</h1>
-        <p class="lead mb-4">Browse through thousands of properties for sale and rent. Your perfect home is just a click away.</p>
+        <p class="lead mb-4">From browsing to moving in, let us guide you to your dream home with ease.</p>
         <div class="cta-buttons">
             {% if not user.is_authenticated %}
                 <a href="{% url 'homifi_app:register' %}" class="btn btn-primary btn-lg me-3">Get Started</a>
@@ -114,9 +114,31 @@
 <style>
     .hero-section {
         background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
-                    url('{% static "images/hero-bg.jpg" %}') center/cover;
+            url('{% static "img/brian-babb-XbwHrt87mQ0-unsplash.jpg" %}') center/cover;
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
         color: white;
         padding: 100px 0;
+        margin-top: -80px;  /* Offset for navbar height */
+    }
+    
+    .hero-section h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .hero-section p {
+        font-size: 1.25rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .hero-section .btn {
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     
     .property-card {

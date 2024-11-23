@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
+from .forms import UserLoginForm
 
 app_name = 'homifi_app'
 
@@ -9,7 +10,11 @@ urlpatterns = [
     path('', views.index, name='index'),
     
     # Auth URLs
-    path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
+    path('login/', auth_views.LoginView.as_view(
+        template_name='auth/login.html',
+        form_class=UserLoginForm,
+        redirect_authenticated_user=True
+    ), name='login'),
     path('register/', views.register, name='register'),
     path('logout/', auth_views.LogoutView.as_view(next_page='homifi_app:index'), name='logout'),
     path('profile/', views.profile, name='profile'),
