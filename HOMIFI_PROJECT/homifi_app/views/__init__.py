@@ -1,6 +1,4 @@
-from django.shortcuts import render
-from .models import Property
-from .views import (
+from .property_views import (
     PropertyListView,
     PropertyDetailView,
     PropertyCreateView,
@@ -8,18 +6,24 @@ from .views import (
     PropertyDeleteView,
     PropertyImageDeleteView,
     ContactOwnerView,
+)
+
+from .user_views import (
     register,
     profile,
     create_linked_account,
     switch_account,
     manage_accounts,
-    PropertyAPIView,
-    PropertyDetailAPIView,
-    dashboard,
-    inquiry_detail_view,
-    index,
 )
 
-def index(request):
-    featured_properties = Property.objects.filter(is_available=True).order_by('-created_at')[:6]
-    return render(request, 'index.html', {'featured_properties': featured_properties})
+from .api_views import (
+    PropertyAPIView,
+    PropertyDetailAPIView,
+)
+
+from .dashboard_views import (
+    dashboard,
+    inquiry_detail_view,
+)
+
+from .index_views import index 

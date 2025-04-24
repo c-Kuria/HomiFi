@@ -56,8 +56,8 @@ urlpatterns = [
     path('api/property-images/<int:pk>/', views.PropertyImageDeleteView.as_view(), name='property_image_delete'),
     
     # API Endpoints
-    path('api/properties/', views.PropertyAPIView.as_view(), name='property_api'),
-    path('api/properties/<int:pk>/', views.PropertyDetailAPIView.as_view(), name='property_detail_api'),
+    path('api/properties/', views.PropertyAPIView.as_view(), name='property_api_list'),
+    path('api/properties/<int:pk>/', views.PropertyDetailAPIView.as_view(), name='property_api_detail'),
     
     # Inquiry URLs
     path('inquiries/<int:pk>/detail/', views.inquiry_detail_view, name='inquiry_detail'),
